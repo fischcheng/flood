@@ -94,20 +94,20 @@ def make_predictions(model, input_df):#, chip_id: str):
     Given an image ID, read in the appropriate files and predict a mask of all ones or zeros
     """
     flood_test = FloodDataset(x_paths = input_df[['vh',	'vv', 'extent', 'chip_id']])
-    test_dl = DataLoader(flood_test, batch_size=1, num_workers=2, pin_memory=True)
-    #predictions = model.predict(flood_test)
+    #test_dl = DataLoader(flood_test, batch_size=1, num_workers=1, pin_memory=True)
+    predictions = model.predict(flood_test)
     #output_prediction = predictions.astype(np.uint8)
     #output_prediction = [torch.from_numpy(np.array(x).astype(np.int8)) for x in predictions]
-    logger.info("Start looping")
-    idx=0
-    for data in tqdm(test_dl, miniters=25, file=sys.stdout, leave=True):
-        prediction = model.predict(data)
-        logger.info("success predict")
-        output_path = SUBMISSION_DIRECTORY / f"{input_df['chip_id'].iloc[idx]}.tif"
-        # make our predictions! (you should edit `make_predictions` to do something useful)
-        #hat = np.array(predict).astype(np.int8)
-        imwrite(output_path, np.array(prediction).astype(np.int8), dtype=np.uint8)
-        idx+=1
+    #logger.info("Start looping")
+    return predictions
+    # for idx, data in tqdm(enumerate(test_dl), miniters=25):
+    #     prediction = model.predict(data)
+    #     logger.info("success predict")
+    #     output_path = SUBMISSION_DIRECTORY / f"{input_df['chip_id'].iloc[idx]}.tif"
+    #     logger.info(f"wrtie to {output_path}")
+    #     # make our predictions! (you should edit `make_predictions` to do something useful)
+    #     #hat = np.array(predict).astype(np.int8)
+    #     imwrite(output_path, np.array(prediction).astype(np.int8), dtype=np.uint8)
 
     # logger.info("check 1")
     # for idx, row in tqdm(input_df.iterrows(), miniters=25, file=sys.stdout, leave=True):
@@ -118,7 +118,7 @@ def make_predictions(model, input_df):#, chip_id: str):
     #     # make our predictions! (you should edit `make_predictions` to do something useful)
     #     #hat = np.array(predict).astype(np.int8)
     #     imwrite(output_path, np.array(prediction).astype(np.int8), dtype=np.uint8)
-    logger.success(f"... done")
+    #logger.success(f"... done")
     # for predict in predictions:
     #     np.array(predict).astype(np.int8)
 
@@ -172,11 +172,14 @@ def main():
     # create similar DataFrame, then create FloodDataset
     # from model.predict(flood_test)
     # imrite each array to /submission
-    make_predictions(model, input_df) # tensor
+    predictions = make_predictions(model, input_df) # tensor
+    logger.info("success predict")
     #hats = dummy_predictions(input_df) 
 
-
-
+    for idx, hat in tqdm(enumerate(predictions), miniters=25, file=sys.stdout, leave=True):
+        output_path = SUBMISSION_DIRECTORY / f"{input_df['chip_id'].iloc[idx]}.tif"
+        imwrite(output_path, np.array(hat).astype(np.uint8), dtype=np.uint8)
+    logger.info("complete!")
 
 if __name__ == "__main__":
     typer.run(main)
